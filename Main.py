@@ -17,12 +17,13 @@ def main():
 
     maze = Maze(API.mazeWidth(), API.mazeHeight())
     mouse = Mouse(0, 0, Directions.NORTH)
-
+    
     while not maze.isInCenter(mouse.getPosition()):
-        updateWalls(maze, mouse)
-        updateFlood(maze, mouse)
-        getNextCell(maze, mouse)
-        move(maze, mouse)
+      updateWalls(maze, mouse)
+      updateFlood(maze, mouse)
+    # log(maze.getAccessibleNeighbors(mouse.getPosition()))
+
+
 
 def updateWalls(maze: Maze, mouse: Mouse) -> None:
     """Updates walls on simulator and maze data"""
@@ -46,25 +47,47 @@ def move(maze: Maze, mouse: Mouse) -> None:
         direction = Directions.SOUTH
     elif nextY > currentY:
         direction = Directions.NORTH
-    
+
     currentDirection = mouse.getDirection()
-    if(direction == currentDirection.turnLeft()):
+    if direction == currentDirection.turnLeft():
         mouse.turnLeft()
-    elif(direction == currentDirection.turnRight()):
+    elif direction == currentDirection.turnRight():
         mouse.turnRight()
-    elif(direction != currentDirection):
+    elif direction != currentDirection:
         mouse.turnAround()
     mouse.moveForward()
 
 
 def getNextCell(maze: Maze, mouse: Mouse) -> None:
-    """Gets next cell position we need to move to based on flood array values"""
+    """Gets next cell position based on lowest neighboring flood array value"""
+    position = mouse.getPosition()
+    direction = mouse.getDirection()
+    neighbors = maze.getAccessibleNeighbors(position)
+    for neighbor in neighbors:
+        pass
     pass
+
+    maze.clearFlood()
+
 
 def updateFlood(maze: Maze, mouse: Mouse) -> None:
     """Updates flood array values, runs flood fill algorithm"""
-    maze.clearFlood()
-    pass
+    queue = []
+    centers = maze.getCenters()
+    for center in centers:
+        queue.append(center)
+
+    while len(queue) != 0:
+        current = queue.pop(0)
+        for neighbor in maze.getAccessibleNeighbors(current):
+            if (
+                not maze.isInCenter(neighbor)
+                and (neighbor not in queue)
+                and (not maze.isFlooded(neighbor))
+            ):
+                maze.flowFlood(current, neighbor)
+                queue.append(neighbor)
+    log("updated")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ class Maze:
     def __init__(self, width, height) -> None:
         self.width = width
         self.height = height
-        
+
         positions = [(j, i) for j in range(width) for i in range(height)]
         self.walls = {position: set() for position in positions}
 
@@ -51,28 +51,41 @@ class Maze:
         """Checks if mouse is in the center"""
         return position in self.center
 
+    def isValidPosition(self, position):
+        x, y = position
+        if x >= 0 and y >= 0 and x < self.width and y < self.height:
+            return True
+        else:
+            return False
+
+    def getCenters(self):
+        return self.center
+
     def checkWall(self, position, direction) -> bool:
         """Checks if theres a wall in the direction and position given"""
         return direction in self.walls[position]
-    
+
     def getAccessibleNeighbors(self, position) -> set:
         """Gets neighboring cells to given position that can be accessed i.e there's no wall in between"""
         x, y = position
         neighbors = set()
-        left = (x-1, y)
-        right = (x+1, y)
-        top = (x, y+1)
-        bottom = (x, y-1)
+        left = (x - 1, y)
+        right = (x + 1, y)
+        top = (x, y + 1)
+        bottom = (x, y - 1)
 
-        if(top in self.walls and Directions.NORTH not in self.walls[position]):
+        if self.isValidPosition(top):
+          if Directions.NORTH not in self.walls[position]:
             neighbors.add(top)
-        if(bottom in self.walls) and Directions.SOUTH not in self.walls[position]:
+        if self.isValidPosition(bottom):
+          if Directions.SOUTH not in self.walls[position]:
             neighbors.add(bottom)
-        if(left in self.walls and Directions.WEST not in self.walls[position]):
+        if self.isValidPosition(left):
+          if Directions.WEST not in self.walls[position]:
             neighbors.add(left)
-        if(right in self.walls and Directions.EAST not in self.walls[position]):
+        if self.isValidPosition(right):
+          if Directions.EAST not in self.walls[position]:
             neighbors.add(right)
-
         return neighbors
 
     def clearFlood(self):
@@ -81,7 +94,19 @@ class Maze:
             [(None if not self.isInCenter((j, i)) else 0) for j in range(self.width)]
             for i in range(self.height)
         ]
-        
+
+    def flowFlood(self, current, neighbor):
+        """Updates flood value"""
+        currentX, currentY = current
+        neighborX, neighborY = neighbor
+        self.flood[neighborX][neighborY] = self.flood[currentX][currentY] + 1
+        API.setText(neighborX, neighborY, self.flood[neighborX][neighborY])
+        log("hey!")
+    
+    def isFlooded(self, position):
+        """Boolean for if the position already has a flood value or not"""
+        x,y = position
+        return self.flood[x][y] is not None
 
     def setWall(self, position, direction):
         """Draws wall on simulator"""
@@ -93,5 +118,5 @@ class Maze:
     def setFlood(self):
         """Draws flood values on simulator"""
         for position in self.walls:
-            x ,y = position
+            x, y = position
             API.setText(x, y, self.flood[x][y])

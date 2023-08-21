@@ -25,7 +25,6 @@ class Mouse:
         self.turnRight()
     
     def moveForward(self) -> None:
-        API.setText(self.x, self.y, f"{self.x}, {self.y}")
         API.moveForward()
         if(self.dir == Directions.NORTH): # ^
           self.y += 1
