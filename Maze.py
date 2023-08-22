@@ -16,6 +16,9 @@ class Maze:
         positions = [(j, i) for j in range(width) for i in range(height)]
         self.walls = {position: set() for position in positions}
 
+        self.path1 = []
+        self.path2 = []
+
         # Setting bounding walls
         for position in self.walls:
             x, y = position
@@ -42,7 +45,7 @@ class Maze:
             self.center.add((x - 1, y - 1))
 
         # Clearing flood, sets all cells to None except center
-        self.clearFlood()
+        self.clearFlood("center")
 
         # Draw flood values
         self.setFlood()
@@ -53,7 +56,8 @@ class Maze:
 
     def backHome(self, position) -> bool:
         """Checks if mouse is back in the starting position"""
-        return position is (0,0)
+        x, y = position
+        return x == 0 and y == 0
 
     def isValidPosition(self, position):
         x, y = position
@@ -88,28 +92,39 @@ class Maze:
             neighbors.add(right)
         return neighbors
 
-    def clearFlood(self):
+    def clearFlood(self, flag) -> None:
         """Sets all flood array cells to blank state (None) except center is set to 0"""
-        self.flood = [
-            [(None if not (self.isInCenter((j, i))) else 0) for j in range(self.width)]
-            for i in range(self.height)
-        ]
+        if flag == "center":
+            self.flood = [
+                [
+                    (None if not (self.isInCenter((j, i))) else 0)
+                    for j in range(self.width)
+                ]
+                for i in range(self.height)
+            ]
+        elif flag == "home":
+            self.flood = [[None for j in range(self.width)] for i in range(self.height)]
+            self.flood[0][0] = 0
 
-    def flowFlood(self, current, neighbor):
+    def flowFlood(self, current, neighbor) -> None:
         """Updates flood value"""
         currentX, currentY = current
         neighborX, neighborY = neighbor
         self.flood[neighborX][neighborY] = self.flood[currentX][currentY] + 1
-        # API.setText(neighborX, neighborY, self.flood[neighborX][neighborY])
-    
-    def isFlooded(self, position):
+
+    def isFlooded(self, position) -> bool:
         """Boolean for if the position already has a flood value or not"""
-        x,y = position
+        x, y = position
         return self.flood[x][y] is not None
-    
-    def getFloodValue(self,position):
+
+    def getFloodValue(self, position):
         return self.flood[position[0]][position[1]]
-    
+
+    def updatePath(self, position, flag):
+        if flag == "center":
+            self.path1.append(position)
+        elif flag == "home":
+            self.path2.append(position)
 
     def setWall(self, position, direction):
         """Draws wall on simulator"""
@@ -126,15 +141,15 @@ class Maze:
         elif direction is Directions.SOUTH:
             self.walls[position].add(direction)
             if bottom in self.walls:
-              self.walls[bottom].add(Directions.NORTH)
+                self.walls[bottom].add(Directions.NORTH)
         elif direction is Directions.EAST:
             self.walls[position].add(direction)
             if right in self.walls:
-              self.walls[right].add(Directions.WEST)
+                self.walls[right].add(Directions.WEST)
         elif direction is Directions.WEST:
             self.walls[position].add(direction)
             if left in self.walls:
-              self.walls[left].add(Directions.EAST)
+                self.walls[left].add(Directions.EAST)
         API.setWall(x, y, direction.value)
 
     # Draw flood values on map
@@ -144,10 +159,17 @@ class Maze:
             x, y = position
             API.setText(x, y, self.flood[x][y])
 
-    def setColor(self,position):
-        """"""
-        if self.isInCenter(position):
-          API.setColor(*position, 'G' )
+    def setColor(self, position):
+        """Sets ground color"""
+        if self.isInCenter(position) or self.backHome(position):
+            API.setColor(*position, "G")
         else:
-          API.setColor(*position, 'B' )
-            
+            API.setColor(*position, "B")
+
+    def setShortestPath(self):
+        if len(self.path1) < len(self.path2):
+            for position in self.path1:
+                API.setColor(*position, "G")
+        else:
+            for position in self.path2:
+                API.setColor(*position, "G")
