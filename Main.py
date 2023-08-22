@@ -20,19 +20,21 @@ def main():
     # maze.setWall((6,7),Directions.EAST)
 
     while not maze.isInCenter(mouse.getPosition()):
-      updateWalls(maze, mouse)
-      updateFlood(maze, mouse, "center")
-      move(maze, mouse, "center")
-      log(mouse.getPosition())
+        updateWalls(maze, mouse)
+        updateFlood(maze, mouse, "center")
+        moveOneCell(maze, mouse, "center")
+        log(mouse.getPosition())
 
     while not maze.backHome(mouse.getPosition()):
-      updateWalls(maze, mouse)
-      updateFlood(maze, mouse, "home")
-      move(maze, mouse, "home")
-      log(mouse.getPosition())
+        updateWalls(maze, mouse)
+        updateFlood(maze, mouse, "home")
+        moveOneCell(maze, mouse, "home")
+        log(mouse.getPosition())
 
     maze.setShortestPath()
-
+    followShortestPath(maze, mouse)
+    log("Path 1: " + str(len(maze.toCenter)))
+    log("Path 2: " + str(len(maze.toHome)))
 
 
 def updateWalls(maze: Maze, mouse: Mouse) -> None:
@@ -45,30 +47,12 @@ def updateWalls(maze: Maze, mouse: Mouse) -> None:
         maze.setWall(mouse.getPosition(), mouse.getDirection().turnRight())
 
 
-def move(maze: Maze, mouse: Mouse, flag) -> None:
+def moveOneCell(maze: Maze, mouse: Mouse, flag) -> None:
     """Moves mouse one cell depending on next move"""
-    currentX, currentY = mouse.getPosition()
-    nextX, nextY = getNextCell(maze, mouse)
+    next = getNextCell(maze, mouse)  # Gets next position
+    maze.updatePath(next, flag)  # Saves path based on run
+    mouse.moveTo(next)  # Moves mouse
 
-    maze.updatePath((nextX, nextY), flag)
-
-    if nextX < currentX:
-        direction = Directions.WEST
-    elif nextX > currentX:
-        direction = Directions.EAST
-    elif nextY < currentY:
-        direction = Directions.SOUTH
-    elif nextY > currentY:
-        direction = Directions.NORTH
-
-    currentDirection = mouse.getDirection()
-    if direction == currentDirection.turnLeft():
-        mouse.turnLeft()
-    elif direction == currentDirection.turnRight():
-        mouse.turnRight()
-    elif direction != currentDirection:
-        mouse.turnAround()
-    mouse.moveForward()
     maze.setColor(mouse.getPosition())
 
 
@@ -90,15 +74,15 @@ def getNextCell(maze: Maze, mouse: Mouse) -> None:
 def updateFlood(maze: Maze, mouse: Mouse, flag: str) -> None:
     """Updates flood array values, runs flood fill algorithm"""
 
+    # Flood fill algorithm based on if its the center run or home run
     if flag is "center":
         maze.clearFlood("center")
-        queue = []
-        centers = maze.getCenters()
-        for center in centers:
-            queue.append(center)
+        # Queue starts with all 4 center cells
+        queue = [center for center in maze.getCenters()]
 
         while len(queue) != 0:
             current = queue.pop(0)
+            # Goes through all accessible neighbors and updates flood values if they aren't center cells or don't already have a value
             for neighbor in maze.getAccessibleNeighbors(current):
                 if (
                     not maze.isInCenter(neighbor)
@@ -110,6 +94,8 @@ def updateFlood(maze: Maze, mouse: Mouse, flag: str) -> None:
 
     elif flag is "home":
         maze.clearFlood("home")
+
+        # Queue starts with home cell
         queue = [(0, 0)]
 
         while len(queue) != 0:
@@ -120,6 +106,12 @@ def updateFlood(maze: Maze, mouse: Mouse, flag: str) -> None:
                     queue.append(neighbor)
 
     maze.setFlood()
+
+
+def followShortestPath(maze: Maze, mouse: Mouse) -> None:
+    """Mouse just follows the shortest path stored in the maze"""
+    for position in maze.shortestPath:
+        mouse.moveTo(position)
 
 
 if __name__ == "__main__":

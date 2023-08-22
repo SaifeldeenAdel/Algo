@@ -16,8 +16,9 @@ class Maze:
         positions = [(j, i) for j in range(width) for i in range(height)]
         self.walls = {position: set() for position in positions}
 
-        self.path1 = []
-        self.path2 = []
+        self.toCenter = []
+        self.toHome = []
+        self.shortestPath = []
 
         # Setting bounding walls
         for position in self.walls:
@@ -93,7 +94,7 @@ class Maze:
         return neighbors
 
     def clearFlood(self, flag) -> None:
-        """Sets all flood array cells to blank state (None) except center is set to 0"""
+        """Sets all flood array cells to blank state (None) except center or home is set to 0 based on flag"""
         if flag == "center":
             self.flood = [
                 [
@@ -121,10 +122,11 @@ class Maze:
         return self.flood[position[0]][position[1]]
 
     def updatePath(self, position, flag):
+        """Updates corresponding path based on flag"""
         if flag == "center":
-            self.path1.append(position)
+            self.toCenter.append(position)
         elif flag == "home":
-            self.path2.append(position)
+            self.toHome.append(position)
 
     def setWall(self, position, direction):
         """Draws wall on simulator"""
@@ -134,18 +136,22 @@ class Maze:
         top = (x, y + 1)
         bottom = (x, y - 1)
 
+        # Sets wall to all cells touching that wall
         if direction is Directions.NORTH:
             self.walls[position].add(direction)
             if top in self.walls:
                 self.walls[top].add(Directions.SOUTH)
+
         elif direction is Directions.SOUTH:
             self.walls[position].add(direction)
             if bottom in self.walls:
                 self.walls[bottom].add(Directions.NORTH)
+
         elif direction is Directions.EAST:
             self.walls[position].add(direction)
             if right in self.walls:
                 self.walls[right].add(Directions.WEST)
+
         elif direction is Directions.WEST:
             self.walls[position].add(direction)
             if left in self.walls:
@@ -167,9 +173,10 @@ class Maze:
             API.setColor(*position, "B")
 
     def setShortestPath(self):
-        if len(self.path1) < len(self.path2):
-            for position in self.path1:
-                API.setColor(*position, "G")
-        else:
-            for position in self.path2:
-                API.setColor(*position, "G")
+        """Sets shortest paths between two"""
+        self.toHome.reverse()
+        self.toHome.pop(0)
+        self.shortestPath = self.toCenter if len(self.toCenter) < len(self.toHome) else self.toHome
+        for position in self.shortestPath:
+            API.setColor(*position, "G")
+    

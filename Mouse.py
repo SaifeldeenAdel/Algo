@@ -35,4 +35,32 @@ class Mouse:
         if(self.dir == Directions.WEST): # <-
           self.x -= 1
 
+    def moveTo(self, nextPosition)->None:
+        # Determine next direction
+        currentX, currentY = self.x, self.y
+        nextX, nextY = nextPosition
+        direction = None
+        
+        if nextX < currentX:
+            direction = Directions.WEST
+        elif nextX > currentX:
+            direction = Directions.EAST
+        elif nextY < currentY:
+            direction = Directions.SOUTH
+        elif nextY > currentY:
+            direction = Directions.NORTH
+
+        # Determine where the mouse turns
+        currentDirection = self.getDirection()
+        if direction == currentDirection.turnLeft():
+            self.turnLeft()
+        elif direction == currentDirection.turnRight():
+            self.turnRight()
+        elif direction != currentDirection:
+            self.turnAround()
+        
+        # Moves forward to next cell and sets color on simulator
+        self.moveForward()
+
+
 
