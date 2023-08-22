@@ -51,6 +51,10 @@ class Maze:
         """Checks if mouse is in the center"""
         return position in self.center
 
+    def backHome(self, position) -> bool:
+        """Checks if mouse is back in the starting position"""
+        return position is (0,0)
+
     def isValidPosition(self, position):
         x, y = position
         if x >= 0 and y >= 0 and x < self.width and y < self.height:
@@ -74,24 +78,20 @@ class Maze:
         top = (x, y + 1)
         bottom = (x, y - 1)
 
-        if self.isValidPosition(top):
-          if Directions.NORTH not in self.walls[position]:
+        if top in self.walls and (Directions.NORTH not in self.walls[position]):
             neighbors.add(top)
-        if self.isValidPosition(bottom):
-          if Directions.SOUTH not in self.walls[position]:
+        if bottom in self.walls and (Directions.SOUTH not in self.walls[position]):
             neighbors.add(bottom)
-        if self.isValidPosition(left):
-          if Directions.WEST not in self.walls[position]:
+        if left in self.walls and (Directions.WEST not in self.walls[position]):
             neighbors.add(left)
-        if self.isValidPosition(right):
-          if Directions.EAST not in self.walls[position]:
+        if right in self.walls and (Directions.EAST not in self.walls[position]):
             neighbors.add(right)
         return neighbors
 
     def clearFlood(self):
         """Sets all flood array cells to blank state (None) except center is set to 0"""
         self.flood = [
-            [(None if not self.isInCenter((j, i)) else 0) for j in range(self.width)]
+            [(None if not (self.isInCenter((j, i))) else 0) for j in range(self.width)]
             for i in range(self.height)
         ]
 
@@ -100,18 +100,41 @@ class Maze:
         currentX, currentY = current
         neighborX, neighborY = neighbor
         self.flood[neighborX][neighborY] = self.flood[currentX][currentY] + 1
-        API.setText(neighborX, neighborY, self.flood[neighborX][neighborY])
-        log("hey!")
+        # API.setText(neighborX, neighborY, self.flood[neighborX][neighborY])
     
     def isFlooded(self, position):
         """Boolean for if the position already has a flood value or not"""
         x,y = position
         return self.flood[x][y] is not None
+    
+    def getFloodValue(self,position):
+        return self.flood[position[0]][position[1]]
+    
 
     def setWall(self, position, direction):
         """Draws wall on simulator"""
         x, y = position
-        self.walls[position].add(direction)
+        left = (x - 1, y)
+        right = (x + 1, y)
+        top = (x, y + 1)
+        bottom = (x, y - 1)
+
+        if direction is Directions.NORTH:
+            self.walls[position].add(direction)
+            if top in self.walls:
+                self.walls[top].add(Directions.SOUTH)
+        elif direction is Directions.SOUTH:
+            self.walls[position].add(direction)
+            if bottom in self.walls:
+              self.walls[bottom].add(Directions.NORTH)
+        elif direction is Directions.EAST:
+            self.walls[position].add(direction)
+            if right in self.walls:
+              self.walls[right].add(Directions.WEST)
+        elif direction is Directions.WEST:
+            self.walls[position].add(direction)
+            if left in self.walls:
+              self.walls[left].add(Directions.EAST)
         API.setWall(x, y, direction.value)
 
     # Draw flood values on map
@@ -120,3 +143,11 @@ class Maze:
         for position in self.walls:
             x, y = position
             API.setText(x, y, self.flood[x][y])
+
+    def setColor(self,position):
+        """"""
+        if self.isInCenter(position):
+          API.setColor(*position, 'G' )
+        else:
+          API.setColor(*position, 'B' )
+            

@@ -17,11 +17,17 @@ def main():
 
     maze = Maze(API.mazeWidth(), API.mazeHeight())
     mouse = Mouse(0, 0, Directions.NORTH)
-    
+    # maze.setWall((6,7),Directions.EAST)
+
     while not maze.isInCenter(mouse.getPosition()):
       updateWalls(maze, mouse)
       updateFlood(maze, mouse)
-    # log(maze.getAccessibleNeighbors(mouse.getPosition()))
+      move(maze, mouse)
+
+    # while not maze.backHome(mouse.getPosition()):
+    #   updateWalls(maze, mouse)
+    #   updateFlood(maze, mouse)
+    #   move(maze, mouse)
 
 
 
@@ -56,30 +62,37 @@ def move(maze: Maze, mouse: Mouse) -> None:
     elif direction != currentDirection:
         mouse.turnAround()
     mouse.moveForward()
+    maze.setColor(mouse.getPosition())
+    
 
 
 def getNextCell(maze: Maze, mouse: Mouse) -> None:
     """Gets next cell position based on lowest neighboring flood array value"""
     position = mouse.getPosition()
-    direction = mouse.getDirection()
     neighbors = maze.getAccessibleNeighbors(position)
+    
+    minValue = 1000
+    minNeighbor = ()
     for neighbor in neighbors:
-        pass
-    pass
-
-    maze.clearFlood()
+        if maze.getFloodValue(neighbor) < minValue:
+            minValue = maze.getFloodValue(neighbor)
+            minNeighbor = neighbor
+    
+    return minNeighbor
 
 
 def updateFlood(maze: Maze, mouse: Mouse) -> None:
     """Updates flood array values, runs flood fill algorithm"""
+    maze.clearFlood()
     queue = []
     centers = maze.getCenters()
     for center in centers:
         queue.append(center)
-
+        
     while len(queue) != 0:
         current = queue.pop(0)
         for neighbor in maze.getAccessibleNeighbors(current):
+            
             if (
                 not maze.isInCenter(neighbor)
                 and (neighbor not in queue)
@@ -87,7 +100,8 @@ def updateFlood(maze: Maze, mouse: Mouse) -> None:
             ):
                 maze.flowFlood(current, neighbor)
                 queue.append(neighbor)
-    log("updated")
+            
+    maze.setFlood()
 
 
 if __name__ == "__main__":
